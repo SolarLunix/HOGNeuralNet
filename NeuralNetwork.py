@@ -1,119 +1,105 @@
 import numpy as np
 
 class NN:
-    def __init__(self, tf, tl, hl=147, hlt='tanh', olt='ReLU', lr=0.01, it=9000):
+    def __init__(self, hl=147, hlt='ReLU', lr=1, it=9000):
         np.random.seed(13)
-
+        n = [0, hl, 0]
         self.cache = {
-            "A0": np.array(tf).T,
-            "Y": np.array(tl).T
-                      }
+            "n": n,
+            "hlt": hlt,
+            "olt": 'sig',
+            "lr": lr,
+            'it': it
+        }
 
-        self.hlt = hlt  # Hidden Layer activation Type
-        self.olt = olt  # Output Layer activation Type
-
-        self.n = [self.cache["A0"].shape[0], hl, self.cache["Y"].shape[0]]
-        self.m = self.cache["A0"].shape[1]
-
-        print(self.n, self.m)
-        self.lr = lr    # Learning Rate
-        self.it = it    # Iterations
-
-        self.W1 = np.random.randn(self.n[1], self.n[0]) * 0.001
-        self.b1 = np.zeros((self.n[1], 1))
-        self.W2 = np.random.randn(self.n[2], self.n[1]) * 0.001
-        self.b2 = np.zeros((self.n[2], 1))
-
-    def train(self):
-        for i in range(self.it):
+    def train(self, tf, tl):
+        self.populate(tf, tl)
+        for i in range(self.cache["it"]):
             self.forward()
-            c = self.cost()
+            c = self.loss()
             self.backward()
 
-            if i == 0:
-                self.cache["sCost"] = c
-            elif i == self.it - 1:
-                self.cache["eCost"] = c
-            elif i % 1000 == 0:
-                print("Cost:", c)
+            if i % 1000 == 0:
+                print("Cost at", i, c)
 
-        print("Start Cost:", self.cache["sCost"])
-        print("Final Cost:", self.cache["eCost"])
+    def populate(self, tf, tl):
+        A0 = np.array(tf).T
+        Y = np.array(tl).T
+
+        n = self.cache["n"]
+        n[0] = A0.shape[0]
+        n[2] = Y.shape[0]
+        m = A0.shape[1]
+
+        c = 0.001
+
+        self.cache["A0"] = A0
+        self.cache["Y"] = Y
+        self.cache["n"] = n
+        self.cache["m"] = m
+        self.cache["W1"] = c * np.random.randn(n[1], n[0])
+        self.cache["b1"] = c * np.random.randn(n[1], 1)
+        self.cache["W2"] = c * np.random.randn(n[2], n[1])
+        self.cache["b2"] = c * np.random.randn(n[2], 1)
+
 
     def forward(self):
-        Z1 = np.dot(self.W1, self.cache['A0']) + self.b1
-        A1 = self.activation(Z1, self.hlt)
-        Z2 = np.dot(self.W2, A1) + self.b2
-        A2 = self.activation(Z2, self.olt)
-
-        self.cache["Z1"] = Z1
-        self.cache["A1"] = A1
-        self.cache["Z2"] = Z2
-        self.cache["A2"] = A2
+        self.cache["Z1"] = np.dot(self.cache["W1"], self.cache["A0"]) + self.cache["b1"]
+        self.cache["A1"] = self.activation(self.cache["Z1"], self.cache["hlt"])
+        self.cache["Z2"] = np.dot(self.cache["W2"], self.cache["A1"]) + self.cache["b2"]
+        self.cache["A2"] = self.activation(self.cache["Z2"], self.cache["olt"])
 
     def activation(self, Z, atype):
         A = np.zeros_like(Z)
         if atype == "lReLU":
-            A = np.maximum(0.01*Z, Z)
+            A = np.maximum(0.01 * Z, Z)
         elif atype == "ReLU":
             A = np.maximum(0, Z)
         elif atype == "sig":
             A = 1 / (1 + np.exp(-Z))
         elif atype == "tanh":
-            A = (np.exp(Z) - np.exp(-Z))/(np.exp(Z) + np.exp(-Z))
+            A = (np.exp(Z) - np.exp(-Z)) / (np.exp(Z) + np.exp(-Z))
         return A
 
-    def cost(self):
-        log_probs = (np.multiply(self.cache["Y"], np.log(self.cache["A2"]))) + (np.multiply((1-self.cache["Y"]),np.log(1-self.cache["A2"])))
-        cost = -(1/self.m) * np.sum(log_probs)
+    def derivative(self, A, atype):
+        dZ = np.array(A)
+        if atype == "lReLU":
+            dZ[dZ > 0] = 1
+            dZ[dZ <= 0] = 0
+        elif atype == "ReLU":
+            dZ[dZ > 0] = 1
+            dZ[dZ <= 0] = 0.01
+        elif atype == "sig":
+            dZ = np.dot(A, (1-A))
+        elif atype == "tanh":
+            dZ = 1 - np.square(A)
+        return dZ
+
+    def loss(self):
+        Y = self.cache["Y"]
+        A2 = self.cache["A2"]
+        m = self.cache["m"]
+
+        loss = np.add(np.multiply(Y, np.log(A2)), np.multiply((1-Y), np.log((1-A2))))
+        cost = (-1/m) * np.sum(loss)
         cost = np.squeeze(cost)
+
         return cost
 
     def backward(self):
-        dZ2 = self.dervZ2(self.olt)
-        dW2 = (1/self.m) * np.dot(dZ2, self.cache["A1"].T)
-        db2 = (1/self.m) * np.sum(dZ2, axis=1, keepdims=True)
-        dZ1 = self.dervZ1(np.dot(self.W2.T, dZ2), self.hlt)
-        dW1 = (1/self.m) * np.dot(dZ1, self.cache["A0"].T)
-        db1 = (1/self.m) * np.sum(dZ1, axis=1, keepdims=True)
+        m = self.cache["m"]
 
-        self.update_params(dW1, db1, dW2, db2)
+        self.cache["dZ2"] = np.subtract(self.cache["A2"], self.cache["Y"])
+        self.cache["dW2"] = (1/m) * np.dot(self.cache["dZ2"], self.cache["A1"].T)
+        self.cache["db2"] = (1/m) * np.sum(self.cache["dZ2"], axis=1, keepdims=True)
+        self.cache["dZ1"] = np.dot(self.cache["W2"].T, self.cache["dZ2"]) * self.derivative(self.cache["A1"], self.cache["hlt"])
+        self.cache["dW1"] = (1/m) * np.dot(self.cache["dZ1"], self.cache["A0"].T)
+        self.cache["db1"] = (1/m) * np.sum(self.cache["dZ2"], axis=1, keepdims=True)
 
-    def dervZ2(self, atype):
-        dZ = np.zeros_like(self.cache["A2"])
-        if atype == "lReLU":
-            dZ = 1 * np.array((self.cache["A2"] > 0))
-        elif atype == "ReLU":
-            dZ = 1 * np.array((self.cache["A2"] > 0))
-        elif atype == "sig":
-            dZ = np.dot(self.cache["A2"], (1 - self.cache["A2"]))
-        elif atype == "tanh":
-            dZ = 1 - self.cache["A2"]**2
-        return dZ
+        self.update()
 
-    def dervZ1(self, dZ1, atype):
-        dZ = dZ1
-        if atype == "lReLU":
-            dZ = dZ * (1 * np.array((self.cache["A1"] > 0)))
-        elif atype == "ReLU":
-            dZ = dZ * (1 * np.array((self.cache["A1"] > 0)))
-        elif atype == "sig":
-            dZ = dZ * (np.dot(self.cache["A1"], (1 - self.cache["A1"])))
-        elif atype == "tanh":
-            dZ = dZ * (1 - self.cache["A1"] ** 2)
-        return dZ
-
-    def update_params(self, dW1, db1, dW2, db2):
-        self.W1 = self.W1 - self.lr * dW1
-        self.b1 = self.b1 - self.lr * db1
-        self.W2 = self.W2 - self.lr * dW2
-        self.b2 = self.b2 - self.lr * db2
-
-    def predict(self, tf):
-        self.cache["A0"] = np.array(tf).T
-        self.forward()
-
-    def accuracy(self, tl):
-        tl = np.array(tl).T
-        acc = float((np.dot(tl, self.cache["A2"].T) + np.dot(1-tl, 1-self.cache["A2"].T))/float(tl.size)*100)
-        return acc
+    def update(self):
+        self.cache["dW1"] = np.subtract(self.cache["dW1"], (self.cache["lr"] * self.cache["dW1"]))
+        self.cache["db1"] = np.subtract(self.cache["db1"], (self.cache["lr"] * self.cache["db1"]))
+        self.cache["dW2"] = np.subtract(self.cache["dW2"], (self.cache["lr"] * self.cache["dW2"]))
+        self.cache["db2"] = np.subtract(self.cache["db2"], (self.cache["lr"] * self.cache["db2"]))
