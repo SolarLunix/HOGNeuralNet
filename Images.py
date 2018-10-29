@@ -39,6 +39,7 @@ class Imgs:
             img_path = os.path.join(dir_path, self.folders[i])
             files = os.listdir(img_path)
             for f in files:
+                output = [0, 0, 0, 0, 0, 0, 0]
                 self.f_count[self.folders[i]] += 1
                 self.f_count["Total"] += 1
 
@@ -46,7 +47,8 @@ class Imgs:
                 img = cv2.resize(img, (120, 120))   # Will be replaced with a cropping function
 
                 fe.append(img)
-                lb.append([i])
+                output[i] = 1
+                lb.append(output)
 
         fe = np.array(fe)
         lb = np.array(lb)

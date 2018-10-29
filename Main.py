@@ -1,9 +1,16 @@
 import time
 import Images
+import warnings
 import NeuralNetwork
 
 
+def warn(*args, **kwargs):
+    pass
+
+
 t = {"Start": time.time()}
+print("Program Starting")
+warnings.warn = warn    # Suppress SKLearn deprecation warnings
 
 # Read in and split the images:
 imgs = Images.Imgs()
@@ -15,19 +22,21 @@ test_lb = imgs.test_lb
 
 t["ReadIn"] = time.time()
 
-# Run HOG on all images
+print("Running HOG")
 train_fe = Images.run_hog(train_fe)
 test_fe = Images.run_hog(test_fe)
 
 t["HOG"] = time.time()
 
-# Initialise the NN and train it
-NN = NeuralNetwork.NN()
+print("Training Neural Network")
+NN = NeuralNetwork.NN(train_fe, train_lb)
+NN.train()
 
 t["Train"] = time.time()
 
-# Test the NN and see how accurate it is.
-acc = NN.accuracy()
+print("Making Predictions")
+NN.predict(test_fe)
+acc = NN.accuracy(test_lb)
 print("\nAccuracy:", round(acc, 2), "%")
 
 t["Test"] = time.time()
