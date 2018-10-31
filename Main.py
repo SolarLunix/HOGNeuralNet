@@ -29,15 +29,15 @@ test_fe = Images.run_hog(test_fe)
 t["HOG"] = time.time()
 
 print("Training Neural Network")
-NN = NeuralNetwork.NN()
+NN = NeuralNetwork.NN(it=1) #Set itterations to 1 for faster testing of accuracy method which isn't working
 NN.train(train_fe, train_lb)
 
 t["Train"] = time.time()
 
 print("Making Predictions")
-#NN.predict(test_fe)
-#acc = NN.accuracy(test_lb)
-#print("\nAccuracy:", round(acc, 2), "%")
+NN.predict(test_fe)
+acc = NN.accuracy(test_lb)
+print("\nAccuracy:", round(acc, 2), "%")
 
 t["Test"] = time.time()
 

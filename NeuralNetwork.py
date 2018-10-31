@@ -1,7 +1,8 @@
 import numpy as np
+from sklearn.metrics import accuracy_score
 
 class NN:
-    def __init__(self, hl=147, hlt='ReLU', lr=1, it=9000):
+    def __init__(self, hl=147, hlt='ReLU', lr=0.1, it=9000):
         np.random.seed(13)
         n = [0, hl, 0]
         self.cache = {
@@ -19,7 +20,7 @@ class NN:
             c = self.loss()
             self.backward()
 
-            if i % 1000 == 0:
+            if i % 500 == 0:
                 print("Cost at", i, c)
 
     def populate(self, tf, tl):
@@ -83,7 +84,7 @@ class NN:
         loss = np.add(np.multiply(Y, np.log(A2)), np.multiply((1-Y), np.log((1-A2))))
         cost = (-1/m) * np.sum(loss)
         cost = np.squeeze(cost)
-
+        self.cache["cost"] = cost
         return cost
 
     def backward(self):
@@ -94,12 +95,27 @@ class NN:
         self.cache["db2"] = (1/m) * np.sum(self.cache["dZ2"], axis=1, keepdims=True)
         self.cache["dZ1"] = np.dot(self.cache["W2"].T, self.cache["dZ2"]) * self.derivative(self.cache["A1"], self.cache["hlt"])
         self.cache["dW1"] = (1/m) * np.dot(self.cache["dZ1"], self.cache["A0"].T)
-        self.cache["db1"] = (1/m) * np.sum(self.cache["dZ2"], axis=1, keepdims=True)
+        self.cache["db1"] = (1/m) * np.sum(self.cache["dZ1"], axis=1, keepdims=True)
 
         self.update()
 
     def update(self):
-        self.cache["dW1"] = np.subtract(self.cache["dW1"], (self.cache["lr"] * self.cache["dW1"]))
-        self.cache["db1"] = np.subtract(self.cache["db1"], (self.cache["lr"] * self.cache["db1"]))
-        self.cache["dW2"] = np.subtract(self.cache["dW2"], (self.cache["lr"] * self.cache["dW2"]))
-        self.cache["db2"] = np.subtract(self.cache["db2"], (self.cache["lr"] * self.cache["db2"]))
+        self.cache["W1"] = self.cache["W1"] - (self.cache["lr"] * self.cache["dW1"])
+        self.cache["b1"] = self.cache["b1"] - (self.cache["lr"] * self.cache["db1"])
+        self.cache["W2"] = self.cache["W2"] - (self.cache["lr"] * self.cache["dW2"])
+        self.cache["b2"] = self.cache["b2"] - (self.cache["lr"] * self.cache["db2"])
+
+    def predict(self, tf):
+        self.cache["A0"] = np.array(tf).T
+        self.forward()
+        return self.cache["A2"]
+
+    def accuracy(self, tl):
+        self.cache["Y"] = np.array(tl).T
+        print(self.cache["Y"].shape)
+        acc = 0
+        for i in range(self.cache["Y"].T.shape[0]):
+            if self.cache["A2"].T[i] == self.cache["Y"].T[i]:
+                acc += 1
+        acc = acc / self.cache["Y"].shape[0]
+        return acc
