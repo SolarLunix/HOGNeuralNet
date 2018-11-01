@@ -9,7 +9,7 @@ def warn(*args, **kwargs):
 
 
 t = {"Start": time.time()}
-print("Program Starting")
+print("Program Starting\n")
 warnings.warn = warn    # Suppress SKLearn deprecation warnings
 
 # Read in and split the images:
@@ -22,19 +22,19 @@ test_lb = imgs.test_lb
 
 t["ReadIn"] = time.time()
 
-print("Running HOG")
+print("\nRunning HOG")
 train_fe = Images.run_hog(train_fe)
 test_fe = Images.run_hog(test_fe)
 
 t["HOG"] = time.time()
 
-print("Training Neural Network")
+print("Training Neural Network\n  --------------")
 NN = NeuralNetwork.NN()
 NN.train(train_fe, train_lb)
 
 t["Train"] = time.time()
 
-print("Making Predictions")
+print("  --------------\nMaking Predictions")
 NN.predict(test_fe)
 acc = NN.accuracy(test_lb)
 print("\nAccuracy:", round(acc, 2), "%")

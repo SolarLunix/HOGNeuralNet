@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.metrics import accuracy_score
 
 class NN:
-    def __init__(self, hl=147, hlt='ReLU', lr=0.1, it=9000):
+    def __init__(self, hl=147, hlt='ReLU', lr=1, it=900):
         np.random.seed(13)
         n = [0, hl, 0]
         self.cache = {
@@ -20,8 +20,9 @@ class NN:
             c = self.loss()
             self.backward()
 
-            if i % 500 == 0:
+            if i % 50 == 0:
                 print("Cost at", i, c)
+                print("Accuracy:", self.accuracy(self.cache["Y"]))
 
     def populate(self, tf, tl):
         A0 = np.array(tf).T
@@ -60,6 +61,9 @@ class NN:
             A = 1 / (1 + np.exp(-Z))
         elif atype == "tanh":
             A = (np.exp(Z) - np.exp(-Z)) / (np.exp(Z) + np.exp(-Z))
+        elif atype == "hard":
+            A[A >= 0.5] = 1
+            A[A < 0] = 0
         return A
 
     def derivative(self, A, atype):
@@ -111,11 +115,19 @@ class NN:
         return self.cache["A2"]
 
     def accuracy(self, tl):
-        self.cache["Y"] = np.array(tl).T
-        print(self.cache["Y"].shape)
+        if(np.array(tl).shape[0] != self.cache["Y"].shape[0]):
+            self.cache["Y"] = np.array(tl).T
+
+        self.finalout()
         acc = 0
         for i in range(self.cache["Y"].T.shape[0]):
-            if np.array_equal(self.cache["A2"].T[i], self.cache["Y"].T[i]):
-                acc += 1
-        acc = acc / self.cache["Y"].T.shape[0]
+            if np.array_equal(self.cache["Y"].T[i], self.cache["out"].T[i]):
+                acc = acc + 1
+        acc = acc / self.cache["Y"].T.shape[0] * 100
         return acc
+
+    def finalout(self):
+        max = np.max(self.cache["A2"], axis=0).reshape((1, -1))
+        self.cache["out"] = 1 * np.greater_equal(self.cache["A2"], max)
+
+
