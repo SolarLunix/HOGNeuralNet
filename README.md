@@ -18,7 +18,7 @@ Read in 213 images from the Jaffe database.
 
 Running HOG
 Training Neural Network
-  --------------
+	---
 Cost at 0 4.851773795072829
 Accuracy: 13.20754716981132
 Cost at 50 2.770205801525372
@@ -55,7 +55,7 @@ Cost at 800 0.009583930287963505
 Accuracy: 100.0
 Cost at 850 0.008680526551903303
 Accuracy: 100.0
-  --------------
+	---
 Making Predictions
 
 Accuracy: 90.74 %
