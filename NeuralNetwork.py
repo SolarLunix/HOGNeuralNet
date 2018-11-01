@@ -115,7 +115,7 @@ class NN:
         print(self.cache["Y"].shape)
         acc = 0
         for i in range(self.cache["Y"].T.shape[0]):
-            if self.cache["A2"].T[i] == self.cache["Y"].T[i]:
+            if np.array_equal(self.cache["A2"].T[i], self.cache["Y"].T[i]):
                 acc += 1
-        acc = acc / self.cache["Y"].shape[0]
+        acc = acc / self.cache["Y"].T.shape[0]
         return acc
