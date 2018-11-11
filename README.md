@@ -1,6 +1,17 @@
 # HOGNeuralNet
 Creation of a neural network to classify HOG data gathered from the Jaffe database.
 
+This nerual network has a single hidden layer which can use a number of activation functions. The output layer consists of 7 neruons using a sigmoid function for an activation. The final output uses the one-hot method, with the maximum value in the set becoming the 1 value, and the rest being reduced to 0. 
+
+# Emotion Labels 
+1000000 Angry
+0100000 Disgust
+0010000 Fear
+0001000 Happy
+0000100 Neutral
+0000010 Sad
+0000001 Surprise
+
 # Program Output
 ```
 Program Starting
