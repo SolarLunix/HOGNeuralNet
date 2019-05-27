@@ -2,6 +2,7 @@ import time
 import Images
 import warnings
 import NeuralNetwork
+import TensorNeuralNetwork
 
 
 def warn(*args, **kwargs):
@@ -29,7 +30,7 @@ test_fe = Images.run_hog(test_fe)
 t["HOG"] = time.time()
 
 print("Training Neural Network\n  --------------")
-NN = NeuralNetwork.NN()
+NN = TensorNeuralNetwork.NN()
 NN.train(train_fe, train_lb)
 
 t["Train"] = time.time()
